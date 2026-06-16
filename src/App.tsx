@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { HttpMethod, KeyValuePair, HttpResponse } from './types'
 import { generateId, createEmptyPair, buildUrlWithParams } from './utils'
+import { sendRequest, cancelRequest } from './requestService'
 import RequestBar from './components/RequestBar'
 import RequestTabs from './components/RequestTabs'
 import ResponsePanel from './components/ResponsePanel'
@@ -29,7 +30,7 @@ export default function App() {
 
     try {
       const fullUrl = buildUrlWithParams(url, queryParams)
-      const result = await window.electronAPI.sendRequest({
+      const result = await sendRequest({
         id: requestId,
         method,
         url: fullUrl,
@@ -49,9 +50,9 @@ export default function App() {
     }
   }
 
-  const handleCancel = async () => {
+  const handleCancel = () => {
     if (currentRequestId) {
-      await window.electronAPI.cancelRequest(currentRequestId)
+      cancelRequest(currentRequestId)
       setLoading(false)
       setError('请求已取消')
     }
