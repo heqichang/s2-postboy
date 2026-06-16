@@ -61,22 +61,40 @@ async function fetchRequest(request: HttpRequest): Promise<HttpResponse> {
     abortControllers.delete(request.id)
     clearTimeout(timeoutId)
 
-    if ((error as Error).name === 'AbortError') {
-      throw new Error('Request cancelled')
+    const err = error as Error
+    if (err.name === 'AbortError') {
+      throw new Error('请求已取消')
     }
-    throw error
+
+    let message = err.message || '请求失败'
+    if (message === 'Failed to fetch') {
+      message = `请求失败 (Failed to fetch)
+
+可能的原因:
+1. 网络连接问题
+2. 目标服务器不可达
+3. 跨域 (CORS) 限制（浏览器环境）
+4. URL 地址不正确
+
+提示: 如果在浏览器中遇到 CORS 限制，请使用 Electron 桌面端。`
+    }
+    throw new Error(message)
   }
 }
 
+export function isElectron(): boolean {
+  return typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined'
+}
+
 export function sendRequest(request: HttpRequest): Promise<HttpResponse> {
-  if (typeof window !== 'undefined' && window.electronAPI) {
+  if (isElectron()) {
     return window.electronAPI.sendRequest(request)
   }
   return fetchRequest(request)
 }
 
 export function cancelRequest(requestId: string): void {
-  if (typeof window !== 'undefined' && window.electronAPI) {
+  if (isElectron()) {
     window.electronAPI.cancelRequest(requestId)
     return
   }

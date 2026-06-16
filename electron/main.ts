@@ -1,17 +1,19 @@
 import { app, BrowserWindow } from 'electron'
-import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import './ipc'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+declare const __dirname: string
+
+const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+const isDev = !!VITE_DEV_SERVER_URL
 
 process.env.APP_ROOT = path.join(__dirname, '..')
+const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
+const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
-export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
-export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
-
-const VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+const VITE_PUBLIC = isDev
+  ? path.join(process.env.APP_ROOT, 'public')
+  : RENDERER_DIST
 process.env.VITE_PUBLIC = VITE_PUBLIC
 
 let win: BrowserWindow | null
@@ -24,12 +26,14 @@ function createWindow() {
     minHeight: 600,
     icon: path.join(VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: path.join(MAIN_DIST, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   })
 
   win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString())
+    win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
   if (VITE_DEV_SERVER_URL) {
