@@ -18,6 +18,7 @@ import ResponsePanel from './components/ResponsePanel'
 import Sidebar from './components/Sidebar'
 import SaveRequestDialog from './components/SaveRequestDialog'
 import ImportDialog from './components/ImportDialog'
+import { ModalProvider, useModal } from './components/ModalContext'
 
 const STORAGE_KEY = 'postboy_cookies'
 
@@ -39,7 +40,8 @@ if (!isElectron()) {
   })
 }
 
-export default function App() {
+function AppContent() {
+  const { showAlert } = useModal()
   const [method, setMethod] = useState<HttpMethod>('GET')
   const [url, setUrl] = useState('')
   const [timeout, setTimeout] = useState(30)
@@ -154,11 +156,11 @@ export default function App() {
   }
 
   const handleSaved = () => {
-    alert('请求已保存')
+    showAlert({ message: '请求已保存' })
   }
 
   const handleImported = () => {
-    alert('导入成功')
+    showAlert({ message: '导入成功' })
   }
 
   return (
@@ -215,5 +217,13 @@ export default function App() {
         />
       )}
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <ModalProvider>
+      <AppContent />
+    </ModalProvider>
   )
 }

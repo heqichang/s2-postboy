@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { HttpRequest, Collection, Folder } from '../types'
 import * as collectionStore from '../store/collectionStore'
+import { useModal } from './ModalContext'
 
 interface SaveRequestDialogProps {
   request: HttpRequest
@@ -13,6 +14,7 @@ export default function SaveRequestDialog({
   onClose,
   onSaved,
 }: SaveRequestDialogProps) {
+  const { showAlert, showPrompt } = useModal()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [collectionId, setCollectionId] = useState<string | null>(null)
@@ -43,11 +45,11 @@ export default function SaveRequestDialog({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert('请输入请求名称')
+      showAlert({ message: '请输入请求名称' })
       return
     }
     if (!collectionId) {
-      alert('请选择集合')
+      showAlert({ message: '请选择集合' })
       return
     }
 
@@ -63,7 +65,7 @@ export default function SaveRequestDialog({
       onSaved()
       onClose()
     } else {
-      alert('保存失败')
+      showAlert({ message: '保存失败' })
     }
   }
 
@@ -139,12 +141,18 @@ export default function SaveRequestDialog({
               <button
                 className="link-btn"
                 onClick={() => {
-                  const name = prompt('输入集合名称:', '新建集合')
-                  if (name) {
-                    const collection = collectionStore.createCollection(name)
-                    setCollections(collectionStore.getCollections())
-                    setCollectionId(collection.id)
-                  }
+                  showPrompt({
+                    title: '新建集合',
+                    message: '输入集合名称:',
+                    defaultValue: '新建集合',
+                    onConfirm: (name) => {
+                      if (name.trim()) {
+                        const collection = collectionStore.createCollection(name.trim())
+                        setCollections(collectionStore.getCollections())
+                        setCollectionId(collection.id)
+                      }
+                    },
+                  })
                 }}
               >
                 创建一个集合

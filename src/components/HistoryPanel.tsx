@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { HistoryItem, HttpRequest } from '../types'
 import * as historyStore from '../store/historyStore'
 import { getStatusClass } from '../utils'
+import { useModal } from './ModalContext'
 
 interface HistoryPanelProps {
   onSelectRequest: (request: HttpRequest) => void
@@ -9,6 +10,7 @@ interface HistoryPanelProps {
 }
 
 export default function HistoryPanel({ onSelectRequest, showSearch = true }: HistoryPanelProps) {
+  const { showConfirm } = useModal()
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [searchKeyword, setSearchKeyword] = useState('')
 
@@ -38,9 +40,15 @@ export default function HistoryPanel({ onSelectRequest, showSearch = true }: His
   }
 
   const handleClearAll = () => {
-    if (confirm('确定要清空所有历史记录吗？')) {
-      historyStore.clearHistory()
-    }
+    showConfirm({
+      title: '清空历史记录',
+      message: '确定要清空所有历史记录吗？',
+      confirmText: '清空',
+      cancelText: '取消',
+      onConfirm: () => {
+        historyStore.clearHistory()
+      },
+    })
   }
 
   const formatTimestamp = (timestamp: number) => {

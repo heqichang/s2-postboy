@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { TreeNode, TreeNodeType, SavedRequest } from '../types'
 import * as collectionStore from '../store/collectionStore'
+import { useModal } from './ModalContext'
 
 interface CollectionTreeProps {
   onSelectRequest: (request: SavedRequest) => void
@@ -139,6 +140,7 @@ export default function CollectionTree({
   onShowSaveDialog,
   onShowImportDialog,
 }: CollectionTreeProps) {
+  const { showAlert, showConfirm, showPrompt } = useModal()
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -215,11 +217,17 @@ export default function CollectionTree({
   }
 
   const handleCreateCollection = () => {
-    const name = prompt('输入集合名称:', '新建集合')
-    if (name) {
-      const collection = collectionStore.createCollection(name)
-      setExpandedNodes((prev) => new Set([...prev, collection.id]))
-    }
+    showPrompt({
+      title: '新建集合',
+      message: '输入集合名称:',
+      defaultValue: '新建集合',
+      onConfirm: (name) => {
+        if (name.trim()) {
+          const collection = collectionStore.createCollection(name.trim())
+          setExpandedNodes((prev) => new Set([...prev, collection.id]))
+        }
+      },
+    })
     setContextMenu(null)
   }
 
@@ -241,13 +249,19 @@ export default function CollectionTree({
       return
     }
 
-    const name = prompt('输入文件夹名称:', '新建文件夹')
-    if (name) {
-      const folder = collectionStore.createFolder(collectionId, parentFolderId, name)
-      if (folder) {
-        setExpandedNodes((prev) => new Set([...prev, node.id, folder.id]))
-      }
-    }
+    showPrompt({
+      title: '新建文件夹',
+      message: '输入文件夹名称:',
+      defaultValue: '新建文件夹',
+      onConfirm: (name) => {
+        if (name.trim()) {
+          const folder = collectionStore.createFolder(collectionId, parentFolderId, name.trim())
+          if (folder) {
+            setExpandedNodes((prev) => new Set([...prev, node.id, folder.id]))
+          }
+        }
+      },
+    })
     setContextMenu(null)
   }
 
@@ -255,21 +269,23 @@ export default function CollectionTree({
     if (!contextMenu) return
     const node = contextMenu.node
 
-    if (!confirm(`确定要删除 "${node.name}" 吗？`)) {
-      setContextMenu(null)
-      return
-    }
+    showConfirm({
+      title: '确认删除',
+      message: `确定要删除 "${node.name}" 吗？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      onConfirm: () => {
+        const location = collectionStore.findRequestLocation(node.id)
 
-    const location = collectionStore.findRequestLocation(node.id)
-
-    if (node.type === 'collection') {
-      collectionStore.deleteCollection(node.id)
-    } else if (node.type === 'folder' && location) {
-      collectionStore.deleteFolder(location.collectionId, node.id)
-    } else if (node.type === 'request' && location) {
-      collectionStore.deleteRequest(location.collectionId, location.folderId, node.id)
-    }
-
+        if (node.type === 'collection') {
+          collectionStore.deleteCollection(node.id)
+        } else if (node.type === 'folder' && location) {
+          collectionStore.deleteFolder(location.collectionId, node.id)
+        } else if (node.type === 'request' && location) {
+          collectionStore.deleteRequest(location.collectionId, location.folderId, node.id)
+        }
+      },
+    })
     setContextMenu(null)
   }
 
@@ -282,16 +298,24 @@ export default function CollectionTree({
       return
     }
 
-    const format = prompt('导出格式 (postman/json):', 'json') as 'postman' | 'json'
-    if (format === 'postman' || format === 'json') {
-      const collection = collectionStore.exportCollection(node.id)
-      if (collection) {
-        const { exportCollection: exportFn, downloadFile } = require('../utils/importExport')
-        const content = exportFn(collection, format)
-        const ext = format === 'postman' ? 'postman_collection.json' : 'json'
-        downloadFile(content, `${node.name}.${ext}`)
-      }
-    }
+    showPrompt({
+      title: '导出集合',
+      message: '输入导出格式 (postman/json):',
+      defaultValue: 'json',
+      placeholder: 'postman 或 json',
+      onConfirm: (format) => {
+        const fmt = format.toLowerCase().trim() as 'postman' | 'json'
+        if (fmt === 'postman' || fmt === 'json') {
+          const collection = collectionStore.exportCollection(node.id)
+          if (collection) {
+            const { exportCollection: exportFn, downloadFile } = require('../utils/importExport')
+            const content = exportFn(collection, fmt)
+            const ext = fmt === 'postman' ? 'postman_collection.json' : 'json'
+            downloadFile(content, `${node.name}.${ext}`)
+          }
+        }
+      },
+    })
     setContextMenu(null)
   }
 
@@ -303,23 +327,27 @@ export default function CollectionTree({
 
     const collections = collectionStore.getCollections()
     if (collections.length === 0) {
-      alert('请先创建集合')
+      showAlert({ message: '请先创建集合' })
       setContextMenu(null)
       return
     }
 
-    const targetCollectionId = prompt(
-      '输入目标集合ID:',
-      collections[0].id
-    )
-    if (targetCollectionId) {
-      collectionStore.copyRequest(
-        location.collectionId,
-        request.id,
-        targetCollectionId,
-        null
-      )
-    }
+    showPrompt({
+      title: '复制请求',
+      message: '输入目标集合ID:',
+      defaultValue: collections[0].id,
+      placeholder: '集合ID',
+      onConfirm: (targetCollectionId) => {
+        if (targetCollectionId.trim()) {
+          collectionStore.copyRequest(
+            location.collectionId,
+            request.id,
+            targetCollectionId.trim(),
+            null
+          )
+        }
+      },
+    })
     setContextMenu(null)
   }
 
