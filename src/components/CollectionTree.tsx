@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { TreeNode, TreeNodeType, SavedRequest } from '../types'
 import * as collectionStore from '../store/collectionStore'
 import { useModal } from './ModalContext'
+import { exportCollection, downloadFile } from '../utils/importExport'
 
 interface CollectionTreeProps {
   onSelectRequest: (request: SavedRequest) => void
@@ -308,8 +309,7 @@ export default function CollectionTree({
         if (fmt === 'postman' || fmt === 'json') {
           const collection = collectionStore.exportCollection(node.id)
           if (collection) {
-            const { exportCollection: exportFn, downloadFile } = require('../utils/importExport')
-            const content = exportFn(collection, fmt)
+            const content = exportCollection(collection, fmt)
             const ext = fmt === 'postman' ? 'postman_collection.json' : 'json'
             downloadFile(content, `${node.name}.${ext}`)
           }
