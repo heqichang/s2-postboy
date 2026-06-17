@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import CollectionTree from './CollectionTree'
 import HistoryPanel from './HistoryPanel'
+import EnvironmentManager from './EnvironmentManager'
 import type { SavedRequest, HttpRequest } from '../types'
 
 interface SidebarProps {
@@ -9,7 +10,7 @@ interface SidebarProps {
   onShowImportDialog: () => void
 }
 
-type SidebarTab = 'collections' | 'history'
+type SidebarTab = 'collections' | 'history' | 'environments'
 
 export default function Sidebar({
   onSelectRequest,
@@ -32,6 +33,12 @@ export default function Sidebar({
           📁 集合
         </button>
         <button
+          className={`sidebar-tab ${activeTab === 'environments' ? 'active' : ''}`}
+          onClick={() => setActiveTab('environments')}
+        >
+          🌍 环境
+        </button>
+        <button
           className={`sidebar-tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -45,6 +52,9 @@ export default function Sidebar({
             onShowSaveDialog={onShowSaveDialog}
             onShowImportDialog={onShowImportDialog}
           />
+        )}
+        {activeTab === 'environments' && (
+          <EnvironmentManager />
         )}
         {activeTab === 'history' && (
           <HistoryPanel onSelectRequest={onSelectRequest} />

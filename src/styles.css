@@ -17,12 +17,6 @@ body {
   height: 100vh;
 }
 
-.header {
-  padding: 12px 20px;
-  background-color: #252526;
-  border-bottom: 1px solid #3e3e42;
-}
-
 .header h1 {
   font-size: 18px;
   font-weight: 600;
@@ -1432,3 +1426,389 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.script-editor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.script-textarea {
+  flex: 1;
+  min-height: 200px;
+  padding: 12px;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+  resize: none;
+}
+
+.script-textarea:focus {
+  border-color: #007acc;
+}
+
+.script-textarea::placeholder {
+  color: #666;
+}
+
+.test-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  background-color: #0e639c;
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.script-result-section {
+  margin-bottom: 20px;
+}
+
+.script-result-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 8px;
+}
+
+.script-success {
+  color: #89d185;
+  font-size: 13px;
+  padding: 8px 12px;
+  background-color: rgba(137, 209, 133, 0.1);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.script-error {
+  color: #f48771;
+  font-size: 13px;
+  padding: 8px 12px;
+  background-color: rgba(244, 135, 113, 0.1);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.test-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.test-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.test-passed {
+  background-color: rgba(137, 209, 133, 0.1);
+}
+
+.test-failed {
+  background-color: rgba(244, 135, 113, 0.1);
+}
+
+.test-icon {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.test-passed .test-icon {
+  color: #89d185;
+}
+
+.test-failed .test-icon {
+  color: #f48771;
+}
+
+.test-name {
+  flex: 1;
+  color: #d4d4d4;
+}
+
+.test-error {
+  color: #f48771;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.variables-changed {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #252526;
+  border-radius: 4px;
+}
+
+.variables-changed h5 {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.variable-item {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #9cdcfe;
+  padding: 4px 8px;
+}
+
+.environment-manager {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.env-tabs {
+  display: flex;
+  border-bottom: 1px solid #3e3e42;
+  background-color: #1e1e1e;
+}
+
+.env-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.env-tab:hover {
+  color: #d4d4d4;
+  background-color: #2d2d30;
+}
+
+.env-tab.active {
+  color: #007acc;
+  border-bottom-color: #007acc;
+  background-color: #252526;
+}
+
+.env-content {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+
+.env-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.env-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.env-item {
+  background-color: #1e1e1e;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.env-item.active {
+  border-color: #007acc;
+}
+
+.env-item-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.env-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #d4d4d4;
+}
+
+.env-name:hover {
+  color: #007acc;
+}
+
+.env-checkbox {
+  font-size: 12px;
+  color: #888;
+}
+
+.env-item.active .env-checkbox {
+  color: #007acc;
+}
+
+.env-name input {
+  flex: 1;
+  padding: 4px 8px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #007acc;
+  border-radius: 3px;
+  font-size: 13px;
+  outline: none;
+}
+
+.env-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+}
+
+.env-variables {
+  padding: 0 12px 12px;
+  border-top: 1px solid #3e3e42;
+  background-color: #252526;
+}
+
+.env-description {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: #252526;
+  border-radius: 4px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.environment-selector {
+  position: relative;
+}
+
+.env-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.env-selector-btn:hover {
+  background-color: #4a4a4a;
+}
+
+.env-icon {
+  font-size: 14px;
+}
+
+.env-selector-text {
+  font-weight: 500;
+}
+
+.env-selector-arrow {
+  font-size: 10px;
+  color: #888;
+}
+
+.env-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 200px;
+  background-color: #2d2d30;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.env-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-size: 13px;
+  color: #d4d4d4;
+}
+
+.env-dropdown-item:hover {
+  background-color: #094771;
+}
+
+.env-dropdown-item.active {
+  background-color: rgba(0, 122, 204, 0.1);
+}
+
+.env-dropdown-item.active .env-checkbox {
+  color: #007acc;
+}
+
+.env-dropdown-divider {
+  height: 1px;
+  background-color: #3e3e42;
+  margin: 4px 0;
+}
+
+.env-dropdown-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+

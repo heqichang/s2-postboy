@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import type {
   HttpMethod,
   KeyValuePair,
@@ -8,14 +8,20 @@ import type {
   CookieItem,
   HttpRequest,
   SavedRequest,
+  ScriptResult,
 } from './types'
 import { generateId, createEmptyPair, buildUrlWithParams, mergeCookies } from './utils'
 import { sendRequest, cancelRequest, isElectron, getAllCookies, setCookieStorage } from './requestService'
 import * as historyStore from './store/historyStore'
+import * as environmentStore from './store/environmentStore'
+import * as collectionStore from './store/collectionStore'
+import { replaceVariablesInObject, buildVariableStore } from './variableReplacer'
+import { runPreRequestScript, runPostRequestScript } from './scriptRunner'
 import RequestBar from './components/RequestBar'
 import RequestTabs from './components/RequestTabs'
 import ResponsePanel from './components/ResponsePanel'
 import Sidebar from './components/Sidebar'
+import EnvironmentSelector from './components/EnvironmentSelector'
 import SaveRequestDialog from './components/SaveRequestDialog'
 import ImportDialog from './components/ImportDialog'
 import { ModalProvider, useModal } from './components/ModalContext'
@@ -50,12 +56,34 @@ function AppContent() {
   const [bodyConfig, setBodyConfig] = useState<RequestBody>({ type: 'none' })
   const [auth, setAuth] = useState<AuthConfig>({ type: 'no-auth' })
   const [cookies, setCookies] = useState<CookieItem[]>([])
+  const [preRequestScript, setPreRequestScript] = useState('')
+  const [postRequestScript, setPostRequestScript] = useState('')
   const [response, setResponse] = useState<HttpResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
+  const [scriptResults, setScriptResults] = useState<{
+    preRequest?: ScriptResult
+    postRequest?: ScriptResult
+  }>({})
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(collectionStore.getActiveCollectionId())
+  const [, forceUpdate] = useState({})
+
+  useEffect(() => {
+    const unsubEnv = environmentStore.subscribe(() => {
+      forceUpdate({})
+    })
+    const unsubCol = collectionStore.subscribe(() => {
+      setActiveCollectionId(collectionStore.getActiveCollectionId())
+      forceUpdate({})
+    })
+    return () => {
+      unsubEnv()
+      unsubCol()
+    }
+  }, [])
 
   const fullUrl = useMemo(() => {
     try {
@@ -76,8 +104,10 @@ function AppContent() {
       auth,
       cookies: [...getAllCookies(), ...cookies],
       timeout: timeout * 1000,
+      preRequestScript,
+      postRequestScript,
     }),
-    [method, fullUrl, headers, queryParams, bodyConfig, auth, cookies, timeout]
+    [method, fullUrl, headers, queryParams, bodyConfig, auth, cookies, timeout, preRequestScript, postRequestScript]
   )
 
   const requestPreview: HttpRequest = useMemo(
@@ -97,8 +127,11 @@ function AppContent() {
     setBodyConfig(request.bodyConfig || { type: 'none' })
     setAuth(request.auth || { type: 'no-auth' })
     setCookies(request.cookies || [])
+    setPreRequestScript(request.preRequestScript || '')
+    setPostRequestScript(request.postRequestScript || '')
     setResponse(null)
     setError(null)
+    setScriptResults({})
   }, [])
 
   const handleSend = async () => {
@@ -107,18 +140,37 @@ function AppContent() {
     setLoading(true)
     setError(null)
     setResponse(null)
+    setScriptResults({})
 
     const requestId = generateId()
     setCurrentRequestId(requestId)
 
-    const requestToSend: HttpRequest = {
-      ...currentRequest,
-      id: requestId,
-      queryParams: [],
-    }
-
     try {
-      const result = await sendRequest(requestToSend)
+      let variableStore = buildVariableStore(activeCollectionId)
+
+      if (preRequestScript) {
+        const { result: preResult, finalStore } = runPreRequestScript(preRequestScript, activeCollectionId)
+        setScriptResults((prev) => ({ ...prev, preRequest: preResult }))
+        variableStore = finalStore
+
+        if (!preResult.success) {
+          throw new Error(`预请求脚本执行失败: ${preResult.error}`)
+        }
+      }
+
+      const requestToSend: HttpRequest = {
+        ...currentRequest,
+        id: requestId,
+        queryParams: [],
+      }
+
+      const { result: processedRequest, missingVariables } = replaceVariablesInObject(requestToSend, variableStore)
+
+      if (missingVariables.length > 0) {
+        console.warn(`未找到的变量: ${missingVariables.join(', ')}`)
+      }
+
+      const result = await sendRequest(processedRequest)
 
       if (result.cookies && result.cookies.length > 0) {
         const merged = mergeCookies(cookies, result.cookies)
@@ -126,11 +178,75 @@ function AppContent() {
       }
 
       setResponse(result)
-      historyStore.addHistoryItem(requestToSend, result)
+
+      if (postRequestScript) {
+        const { result: postResult } = runPostRequestScript(
+          postRequestScript,
+          processedRequest,
+          result,
+          activeCollectionId
+        )
+        setScriptResults((prev) => ({ ...prev, postRequest: postResult }))
+
+        if (postResult.variables.environment) {
+          const activeEnv = environmentStore.getActiveEnvironment()
+          if (activeEnv) {
+            const updatedVariables = [...activeEnv.variables]
+            Object.entries(postResult.variables.environment).forEach(([key, value]) => {
+              const existingIndex = updatedVariables.findIndex((v) => v.key === key)
+              if (existingIndex >= 0) {
+                updatedVariables[existingIndex] = {
+                  ...updatedVariables[existingIndex],
+                  value,
+                  enabled: true,
+                }
+              } else {
+                updatedVariables.push({
+                  id: generateId(),
+                  key,
+                  value,
+                  enabled: true,
+                })
+              }
+            })
+            environmentStore.updateEnvironment(activeEnv.id, { variables: updatedVariables })
+          }
+        }
+
+        if (postResult.variables.global) {
+          const currentGlobal = environmentStore.getGlobalVariables()
+          const updatedVariables = [...currentGlobal]
+          Object.entries(postResult.variables.global).forEach(([key, value]) => {
+            const existingIndex = updatedVariables.findIndex((v) => v.key === key)
+            if (existingIndex >= 0) {
+              updatedVariables[existingIndex] = {
+                ...updatedVariables[existingIndex],
+                value,
+                enabled: true,
+              }
+            } else {
+              updatedVariables.push({
+                id: generateId(),
+                key,
+                value,
+                enabled: true,
+              })
+            }
+          })
+          environmentStore.updateGlobalVariables(updatedVariables)
+        }
+      }
+
+      historyStore.addHistoryItem(processedRequest, result)
     } catch (e) {
       if ((e as Error).message !== 'Request cancelled') {
         const errorMessage = (e as Error).message
         setError(errorMessage)
+        const requestToSend: HttpRequest = {
+          ...currentRequest,
+          id: requestId,
+          queryParams: [],
+        }
         historyStore.addHistoryItem(requestToSend, undefined, errorMessage)
       }
     } finally {
@@ -167,6 +283,7 @@ function AppContent() {
     <div className="app">
       <div className="header">
         <h1>PostBoy - HTTP 请求调试工具</h1>
+        <EnvironmentSelector />
       </div>
       <div className="main-content">
         <Sidebar
@@ -192,15 +309,24 @@ function AppContent() {
             bodyConfig={bodyConfig}
             auth={auth}
             cookies={cookies}
+            preRequestScript={preRequestScript}
+            postRequestScript={postRequestScript}
             requestPreview={requestPreview}
             onQueryParamsChange={setQueryParams}
             onHeadersChange={setHeaders}
             onBodyChange={setBodyConfig}
             onAuthChange={setAuth}
             onCookiesChange={setCookies}
+            onPreRequestScriptChange={setPreRequestScript}
+            onPostRequestScriptChange={setPostRequestScript}
             disabled={loading}
           />
-          <ResponsePanel response={response} loading={loading} error={error} />
+          <ResponsePanel
+            response={response}
+            loading={loading}
+            error={error}
+            scriptResults={scriptResults}
+          />
         </div>
       </div>
       {showSaveDialog && (

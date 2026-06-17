@@ -92,6 +92,8 @@ export interface HttpRequest {
   auth?: AuthConfig
   cookies?: CookieItem[]
   timeout: number
+  preRequestScript?: string
+  postRequestScript?: string
 }
 
 export interface HttpResponse {
@@ -127,6 +129,7 @@ export interface Collection {
   description: string
   folders: Folder[]
   requests: SavedRequest[]
+  variables: Variable[]
   createdAt: number
   updatedAt: number
 }
@@ -307,4 +310,110 @@ export interface HARResponse {
 export interface HARParam {
   name: string
   value: string
+}
+
+export interface Variable {
+  id: string
+  key: string
+  value: string
+  enabled: boolean
+}
+
+export interface Environment {
+  id: string
+  name: string
+  variables: Variable[]
+  createdAt: number
+  updatedAt: number
+}
+
+export type VariableScope = 'global' | 'environment' | 'collection' | 'data' | 'local'
+
+export interface VariableStore {
+  global: Record<string, string>
+  environment: Record<string, string>
+  collection: Record<string, string>
+  data: Record<string, string>
+  local: Record<string, string>
+}
+
+export interface ScriptContext {
+  environment: {
+    get: (key: string) => string | undefined
+    set: (key: string, value: string) => void
+    unset: (key: string) => void
+    clear: () => void
+  }
+  global: {
+    get: (key: string) => string | undefined
+    set: (key: string, value: string) => void
+    unset: (key: string) => void
+    clear: () => void
+  }
+  collectionVariables: {
+    get: (key: string) => string | undefined
+    set: (key: string, value: string) => void
+    unset: (key: string) => void
+    clear: () => void
+  }
+  variables: {
+    get: (key: string) => string | undefined
+    set: (key: string, value: string) => void
+    unset: (key: string) => void
+    clear: () => void
+  }
+  response?: {
+    json: () => unknown
+    text: () => string
+    status: number
+    headers: Record<string, string | string[]>
+  }
+  request?: {
+    url: string
+    method: string
+    headers: Record<string, string>
+    body?: string
+  }
+  info?: {
+    eventName: 'prerequest' | 'test'
+  }
+  test: (name: string, fn: () => void) => void
+  expect: (value: unknown) => {
+    to: {
+      equal: (expected: unknown) => void
+      eql: (expected: unknown) => void
+      be: {
+        above: (n: number) => void
+        below: (n: number) => void
+        ok: () => void
+        true: () => void
+        false: () => void
+      }
+      include: (value: unknown) => void
+      have: {
+        property: (key: string) => void
+        status: (code: number) => void
+      }
+    }
+  }
+  console: Console
+}
+
+export interface ScriptResult {
+  success: boolean
+  error?: string
+  tests: { name: string; passed: boolean; error?: string }[]
+  variables: Partial<VariableStore>
+}
+
+export interface EnvironmentStore {
+  environments: Environment[]
+  activeEnvironmentId: string | null
+  globalVariables: Variable[]
+}
+
+export interface TestResult {
+  name: string
+  passed: boolean
+  error?: string
 }

@@ -111,6 +111,7 @@ function importFromPostman(content: string, defaultName: string): Collection[] {
       description: data.info?.description || '',
       folders: [],
       requests: [],
+      variables: [],
       createdAt: now,
       updatedAt: now,
     }
@@ -233,6 +234,7 @@ function importFromOpenAPI(content: string, defaultName: string): Collection[] {
       description: data.info?.description || '',
       folders: [],
       requests: [],
+      variables: [],
       createdAt: now,
       updatedAt: now,
     }
@@ -320,6 +322,7 @@ function importFromCurl(content: string, defaultName: string): Collection[] {
     description: '',
     folders: [],
     requests: [],
+    variables: [],
     createdAt: now,
     updatedAt: now,
   }
@@ -438,6 +441,7 @@ function importFromHAR(content: string, defaultName: string): Collection[] {
       description: '',
       folders: [],
       requests: [],
+      variables: [],
       createdAt: now,
       updatedAt: now,
     }
@@ -555,6 +559,7 @@ function validateCollection(data: unknown): Collection {
     description: typeof obj.description === 'string' ? obj.description : '',
     folders: Array.isArray(obj.folders) ? obj.folders.map(validateFolder) : [],
     requests: Array.isArray(obj.requests) ? obj.requests.map(validateSavedRequest) : [],
+    variables: Array.isArray(obj.variables) ? obj.variables : [],
     createdAt: typeof obj.createdAt === 'number' ? obj.createdAt : now,
     updatedAt: typeof obj.updatedAt === 'number' ? obj.updatedAt : now,
   }

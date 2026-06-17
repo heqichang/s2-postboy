@@ -6,6 +6,7 @@ import type {
   HttpRequest,
   TreeNode,
   TreeNodeType,
+  Variable,
 } from '../types'
 
 const COLLECTIONS_STORAGE_KEY = 'postboy_collections'
@@ -61,6 +62,7 @@ export function createCollection(name: string, description: string = ''): Collec
     description,
     folders: [],
     requests: [],
+    variables: [],
     createdAt: now,
     updatedAt: now,
   }
@@ -499,8 +501,24 @@ export function createEmptyCollection(): Collection {
     description: '',
     folders: [],
     requests: [],
+    variables: [],
     createdAt: now,
     updatedAt: now,
+  }
+}
+
+export function getCollectionVariables(collectionId: string): Variable[] {
+  const collection = collections.find((c) => c.id === collectionId)
+  return collection?.variables || []
+}
+
+export function updateCollectionVariables(collectionId: string, variables: Variable[]): void {
+  const collection = collections.find((c) => c.id === collectionId)
+  if (collection) {
+    collection.variables = variables
+    collection.updatedAt = Date.now()
+    saveCollections()
+    notifyListeners()
   }
 }
 

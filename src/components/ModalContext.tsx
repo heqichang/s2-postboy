@@ -9,7 +9,7 @@ interface AlertOptions {
 interface ConfirmOptions {
   title?: string
   message: string
-  onConfirm: () => void
+  onConfirm?: () => void
   onCancel?: () => void
   confirmText?: string
   cancelText?: string
@@ -20,7 +20,7 @@ interface PromptOptions {
   message: string
   defaultValue?: string
   placeholder?: string
-  onConfirm: (value: string) => void
+  onConfirm?: (value: string) => void
   onCancel?: () => void
   confirmText?: string
   cancelText?: string
@@ -35,8 +35,8 @@ interface ModalState {
 
 interface ModalContextType {
   showAlert: (options: AlertOptions) => void
-  showConfirm: (options: ConfirmOptions) => void
-  showPrompt: (options: PromptOptions) => void
+  showConfirm: (options: ConfirmOptions) => Promise<boolean>
+  showPrompt: (options: PromptOptions) => Promise<string | null>
   closeAll: () => void
 }
 
@@ -66,13 +66,31 @@ export function ModalProvider({ children }: ModalProviderProps) {
     setModalState((prev) => ({ ...prev, alert: options }))
   }, [])
 
-  const showConfirm = useCallback((options: ConfirmOptions) => {
-    setModalState((prev) => ({ ...prev, confirm: options }))
+  const showConfirm = useCallback((options: Omit<ConfirmOptions, 'onConfirm' | 'onCancel'>): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setModalState((prev) => ({
+        ...prev,
+        confirm: {
+          ...options,
+          onConfirm: () => resolve(true),
+          onCancel: () => resolve(false),
+        },
+      }))
+    })
   }, [])
 
-  const showPrompt = useCallback((options: PromptOptions) => {
-    setPromptValue(options.defaultValue || '')
-    setModalState((prev) => ({ ...prev, prompt: options }))
+  const showPrompt = useCallback((options: Omit<PromptOptions, 'onConfirm' | 'onCancel'>): Promise<string | null> => {
+    return new Promise((resolve) => {
+      setPromptValue(options.defaultValue || '')
+      setModalState((prev) => ({
+        ...prev,
+        prompt: {
+          ...options,
+          onConfirm: (value: string) => resolve(value),
+          onCancel: () => resolve(null),
+        },
+      }))
+    })
   }, [])
 
   const closeAll = useCallback(() => {

@@ -1,14 +1,18 @@
 import { useState } from 'react'
-import type { HttpResponse } from '../types'
+import type { HttpResponse, ScriptResult } from '../types'
 import { formatBytes, formatTime, formatJson, getStatusClass, formatResponseHeaders } from '../utils'
 
 interface ResponsePanelProps {
   response: HttpResponse | null
   loading: boolean
   error: string | null
+  scriptResults?: {
+    preRequest?: ScriptResult
+    postRequest?: ScriptResult
+  }
 }
 
-type TabType = 'body' | 'headers'
+type TabType = 'body' | 'headers' | 'test-results'
 
 function highlightJson(json: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = []
@@ -49,7 +53,7 @@ function highlightJson(json: string): React.ReactNode[] {
   return nodes
 }
 
-export default function ResponsePanel({ response, loading, error }: ResponsePanelProps) {
+export default function ResponsePanel({ response, loading, error, scriptResults }: ResponsePanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('body')
   const [copied, setCopied] = useState(false)
 
@@ -133,6 +137,17 @@ export default function ResponsePanel({ response, loading, error }: ResponsePane
         >
           Headers
         </button>
+        <button
+          className={`response-tab ${activeTab === 'test-results' ? 'active' : ''}`}
+          onClick={() => setActiveTab('test-results')}
+        >
+          Test Results
+          {scriptResults?.postRequest?.tests && scriptResults.postRequest.tests.length > 0 && (
+            <span className="test-badge">
+              {scriptResults.postRequest.tests.filter((t) => t.passed).length}/{scriptResults.postRequest.tests.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {activeTab === 'body' && (
@@ -159,6 +174,67 @@ export default function ResponsePanel({ response, loading, error }: ResponsePane
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'test-results' && (
+        <div className="response-body">
+          {scriptResults?.preRequest && (
+            <div className="script-result-section">
+              <h4>Pre-request Script</h4>
+              {scriptResults.preRequest.success ? (
+                <div className="script-success">✓ 执行成功</div>
+              ) : (
+                <div className="script-error">✗ 执行失败: {scriptResults.preRequest.error}</div>
+              )}
+            </div>
+          )}
+          {scriptResults?.postRequest && (
+            <div className="script-result-section">
+              <h4>Tests</h4>
+              {!scriptResults.postRequest.success && (
+                <div className="script-error">✗ 执行失败: {scriptResults.postRequest.error}</div>
+              )}
+              {scriptResults.postRequest.tests.length > 0 ? (
+                <div className="test-list">
+                  {scriptResults.postRequest.tests.map((test, i) => (
+                    <div key={i} className={`test-item ${test.passed ? 'test-passed' : 'test-failed'}`}>
+                      <span className="test-icon">{test.passed ? '✓' : '✗'}</span>
+                      <span className="test-name">{test.name}</span>
+                      {!test.passed && test.error && (
+                        <span className="test-error">{test.error}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state-text">没有测试结果</div>
+              )}
+              {scriptResults.postRequest.variables && Object.keys(scriptResults.postRequest.variables).length > 0 && (
+                <div className="variables-changed">
+                  <h5>设置的变量:</h5>
+                  {Object.entries(scriptResults.postRequest.variables).map(([scope, vars]) => (
+                    Object.keys(vars).length > 0 && (
+                      <div key={scope}>
+                        <strong>{scope}:</strong>
+                        {Object.entries(vars).map(([key, value]) => (
+                          <div key={key} className="variable-item">
+                            {key} = {value}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {!scriptResults?.preRequest && !scriptResults?.postRequest && (
+            <div className="empty-state">
+              <div className="empty-state-icon">📝</div>
+              <div className="empty-state-text">没有脚本执行结果</div>
+            </div>
+          )}
         </div>
       )}
     </div>
