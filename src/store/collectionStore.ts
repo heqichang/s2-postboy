@@ -19,10 +19,36 @@ function loadCollections(): void {
   try {
     const stored = localStorage.getItem(COLLECTIONS_STORAGE_KEY)
     if (stored) {
-      collections = JSON.parse(stored)
+      const parsed = JSON.parse(stored)
+      collections = Array.isArray(parsed) ? parsed.map(normalizeCollection) : []
     }
   } catch {
     collections = []
+  }
+}
+
+function normalizeCollection(c: any): Collection {
+  return {
+    id: c.id || generateId(),
+    name: c.name || 'Unnamed Collection',
+    description: c.description || '',
+    folders: Array.isArray(c.folders) ? c.folders.map(normalizeFolder) : [],
+    requests: Array.isArray(c.requests) ? c.requests : [],
+    variables: Array.isArray(c.variables) ? c.variables : [],
+    createdAt: c.createdAt || Date.now(),
+    updatedAt: c.updatedAt || Date.now(),
+  }
+}
+
+function normalizeFolder(f: any): Folder {
+  return {
+    id: f.id || generateId(),
+    name: f.name || 'Unnamed Folder',
+    description: f.description || '',
+    folders: Array.isArray(f.folders) ? f.folders.map(normalizeFolder) : [],
+    requests: Array.isArray(f.requests) ? f.requests : [],
+    createdAt: f.createdAt || Date.now(),
+    updatedAt: f.updatedAt || Date.now(),
   }
 }
 

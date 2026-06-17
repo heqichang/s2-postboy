@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Environment, Variable } from '../types'
 import * as environmentStore from '../store/environmentStore'
 import * as collectionStore from '../store/collectionStore'
@@ -17,25 +17,56 @@ export default function EnvironmentManager() {
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(
     collectionStore.getActiveCollectionId()
   )
+  const [localGlobalVariables, setLocalGlobalVariables] = useState<Variable[]>(
+    environmentStore.getGlobalVariables()
+  )
+  const [localCollectionVariables, setLocalCollectionVariables] = useState<Variable[]>([])
+  const globalSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const collectionSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const activeCollectionIdRef = useRef<string | null>(activeCollectionId)
+  const prevGlobalVarsRef = useRef<Variable[]>(environmentStore.getGlobalVariables())
 
   useEffect(() => {
-    const unsubEnv = environmentStore.subscribe(() => forceUpdate({}))
-    const unsubCol = collectionStore.subscribe(() => {
-      setActiveCollectionId(collectionStore.getActiveCollectionId())
+    activeCollectionIdRef.current = activeCollectionId
+  }, [activeCollectionId])
+
+  useEffect(() => {
+    const vars = activeCollectionId
+      ? collectionStore.getCollectionVariables(activeCollectionId)
+      : []
+    setLocalCollectionVariables(vars)
+  }, [activeCollectionId])
+
+  useEffect(() => {
+    let previousActiveColId = collectionStore.getActiveCollectionId()
+    const unsubEnv = environmentStore.subscribe(() => {
+      const newGlobalVars = environmentStore.getGlobalVariables()
+      const globalVarsChanged = JSON.stringify(newGlobalVars) !== JSON.stringify(prevGlobalVarsRef.current)
+      prevGlobalVarsRef.current = JSON.parse(JSON.stringify(newGlobalVars))
+      if (globalVarsChanged) {
+        setLocalGlobalVariables(newGlobalVars)
+      }
       forceUpdate({})
+    })
+    const unsubCol = collectionStore.subscribe(() => {
+      const newActiveColId = collectionStore.getActiveCollectionId()
+      if (previousActiveColId !== newActiveColId) {
+        setActiveCollectionId(newActiveColId)
+      }
+      previousActiveColId = newActiveColId
     })
     return () => {
       unsubEnv()
       unsubCol()
+      if (globalSyncTimer.current) clearTimeout(globalSyncTimer.current)
+      if (collectionSyncTimer.current) clearTimeout(collectionSyncTimer.current)
     }
   }, [])
 
   const environments = environmentStore.getEnvironments()
-  const globalVariables = environmentStore.getGlobalVariables()
+  const globalVariables = localGlobalVariables
   const activeEnvId = environmentStore.getActiveEnvironmentId()
-  const collectionVariables = activeCollectionId
-    ? collectionStore.getCollectionVariables(activeCollectionId)
-    : []
+  const collectionVariables = localCollectionVariables
 
   const handleCreateEnvironment = () => {
     const env = environmentStore.createEnvironment('New Environment', [createEmptyVariable()])
@@ -93,26 +124,46 @@ export default function EnvironmentManager() {
   }
 
   const handleUpdateGlobalVariables = (variables: Variable[]) => {
-    environmentStore.updateGlobalVariables(variables)
+    setLocalGlobalVariables(variables)
+    if (globalSyncTimer.current) clearTimeout(globalSyncTimer.current)
+    globalSyncTimer.current = setTimeout(() => {
+      environmentStore.updateGlobalVariables(variables)
+    }, 300)
   }
 
   const handleUpdateCollectionVariables = (variables: Variable[]) => {
-    if (!activeCollectionId) return
-    collectionStore.updateCollectionVariables(activeCollectionId, variables)
+    setLocalCollectionVariables(variables)
+    if (collectionSyncTimer.current) clearTimeout(collectionSyncTimer.current)
+    const colId = activeCollectionIdRef.current
+    collectionSyncTimer.current = setTimeout(() => {
+      if (colId) {
+        collectionStore.updateCollectionVariables(colId, variables)
+      }
+    }, 300)
   }
 
   const handleAddGlobalVariable = () => {
     const newVar = createEmptyVariable()
-    environmentStore.updateGlobalVariables([...globalVariables, newVar])
+    const updated = [...localGlobalVariables, newVar]
+    setLocalGlobalVariables(updated)
+    if (globalSyncTimer.current) clearTimeout(globalSyncTimer.current)
+    globalSyncTimer.current = setTimeout(() => {
+      environmentStore.updateGlobalVariables(updated)
+    }, 300)
   }
 
   const handleAddCollectionVariable = () => {
     if (!activeCollectionId) return
     const newVar = createEmptyVariable()
-    collectionStore.updateCollectionVariables(activeCollectionId, [
-      ...collectionVariables,
-      newVar,
-    ])
+    const updated = [...localCollectionVariables, newVar]
+    setLocalCollectionVariables(updated)
+    if (collectionSyncTimer.current) clearTimeout(collectionSyncTimer.current)
+    const colId = activeCollectionId
+    collectionSyncTimer.current = setTimeout(() => {
+      if (colId) {
+        collectionStore.updateCollectionVariables(colId, updated)
+      }
+    }, 300)
   }
 
   const handleExportEnvironment = (env: Environment) => {
