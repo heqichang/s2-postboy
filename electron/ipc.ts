@@ -95,10 +95,14 @@ function buildCookieHeader(cookies: CookieItem[], url: string): string {
     const parsedUrl = new URL(url)
     const host = parsedUrl.hostname
 
+    const isSecure = parsedUrl.protocol === 'https:'
+
     const matchedCookies = cookies.filter((cookie) => {
       if (!cookie.enabled || !cookie.name) return false
+      if (cookie.secure && !isSecure) return false
       if (cookie.domain) {
-        const domainMatch = host.endsWith(cookie.domain) || host === cookie.domain
+        const normalizedDomain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain
+        const domainMatch = host === normalizedDomain || host.endsWith('.' + normalizedDomain)
         if (!domainMatch) return false
       }
       if (cookie.path && !parsedUrl.pathname.startsWith(cookie.path)) {
@@ -110,7 +114,7 @@ function buildCookieHeader(cookies: CookieItem[], url: string): string {
     return matchedCookies.map((c) => `${c.name}=${c.value}`).join('; ')
   } catch {
     return cookies
-      .filter((c) => c.enabled && c.name)
+      .filter((c) => c.enabled && c.name && !c.secure)
       .map((c) => `${c.name}=${c.value}`)
       .join('; ')
   }
