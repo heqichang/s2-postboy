@@ -315,6 +315,21 @@ export default function EnvironmentManager() {
 
       {activeTab === 'collection-variables' && (
         <div className="env-content">
+          <div className="collection-selector">
+            <label className="collection-selector-label">选择集合:</label>
+            <select
+              className="collection-select"
+              value={activeCollectionId || ''}
+              onChange={(e) => setActiveCollectionId(e.target.value || null)}
+            >
+              <option value="">-- 请选择一个集合 --</option>
+              {collectionStore.getCollections().map((collection) => (
+                <option key={collection.id} value={collection.id}>
+                  {collection.name}
+                </option>
+              ))}
+            </select>
+          </div>
           {!activeCollectionId ? (
             <div className="empty-state">
               <div className="empty-state-icon">📁</div>

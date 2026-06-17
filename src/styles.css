@@ -1718,6 +1718,44 @@ body {
   border-radius: 4px;
 }
 
+.collection-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #252526;
+  border-radius: 4px;
+}
+
+.collection-selector-label {
+  font-size: 13px;
+  color: #ccc;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.collection-select {
+  flex: 1;
+  padding: 8px 12px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.collection-select:hover {
+  border-color: #0078d4;
+}
+
+.collection-select:focus {
+  outline: none;
+  border-color: #0078d4;
+}
+
 .header {
   display: flex;
   align-items: center;

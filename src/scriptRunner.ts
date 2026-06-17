@@ -210,13 +210,11 @@ export function runScript(
   try {
     const wrappedScript = `
       "use strict";
-      return (function(pm) {
-        ${script}
-      })(pm);
+      ${script}
     `
 
-    const scriptFn = new Function(wrappedScript)
-    scriptFn.call(context, context)
+    const scriptFn = new Function('pm', wrappedScript)
+    scriptFn(context)
 
     return {
       success: true,
