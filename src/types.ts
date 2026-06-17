@@ -103,3 +103,208 @@ export interface HttpResponse {
   size: number
   cookies?: CookieItem[]
 }
+
+export interface SavedRequest extends HttpRequest {
+  name: string
+  description: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface Folder {
+  id: string
+  name: string
+  description: string
+  folders: Folder[]
+  requests: SavedRequest[]
+  createdAt: number
+  updatedAt: number
+}
+
+export interface Collection {
+  id: string
+  name: string
+  description: string
+  folders: Folder[]
+  requests: SavedRequest[]
+  createdAt: number
+  updatedAt: number
+}
+
+export interface HistoryItem {
+  id: string
+  request: HttpRequest
+  response?: HttpResponse
+  timestamp: number
+  statusCode?: number
+  error?: string
+}
+
+export type TreeNodeType = 'collection' | 'folder' | 'request'
+
+export interface TreeNode {
+  id: string
+  type: TreeNodeType
+  name: string
+  children?: TreeNode[]
+  data?: Collection | Folder | SavedRequest
+}
+
+export type ImportFormat = 'postman' | 'openapi' | 'curl' | 'har' | 'json'
+export type ExportFormat = 'postman' | 'json'
+
+export interface CollectionStore {
+  collections: Collection[]
+  activeCollectionId: string | null
+}
+
+export interface HistoryStore {
+  items: HistoryItem[]
+}
+
+export interface SaveRequestDialogData {
+  name: string
+  description: string
+  collectionId: string | null
+  folderId: string | null
+}
+
+export interface TreeNodeWithPath extends TreeNode {
+  path: string[]
+}
+
+export interface PostmanCollectionV21 {
+  info: {
+    name: string
+    description?: string
+    schema: string
+  }
+  item: PostmanItem[]
+}
+
+export interface PostmanItem {
+  name: string
+  description?: string
+  request?: PostmanRequest
+  item?: PostmanItem[]
+}
+
+export interface PostmanRequest {
+  method: string
+  url: {
+    raw: string
+    protocol?: string
+    host?: string[]
+    path?: string[]
+    query?: PostmanQueryParam[]
+  }
+  header?: PostmanHeader[]
+  body?: PostmanBody
+}
+
+export interface PostmanQueryParam {
+  key: string
+  value: string
+  disabled?: boolean
+}
+
+export interface PostmanHeader {
+  key: string
+  value: string
+  disabled?: boolean
+}
+
+export interface PostmanBody {
+  mode: string
+  raw?: string
+  urlencoded?: PostmanFormParam[]
+  formdata?: PostmanFormData[]
+}
+
+export interface PostmanFormParam {
+  key: string
+  value: string
+  disabled?: boolean
+}
+
+export interface PostmanFormData extends PostmanFormParam {
+  type?: string
+  src?: string
+}
+
+export interface OpenAPISpec {
+  openapi: string
+  info: {
+    title: string
+    description?: string
+  }
+  paths: Record<string, OpenAPIPathItem>
+}
+
+export interface OpenAPIPathItem {
+  [method: string]: OpenAPIOperation | undefined
+}
+
+export interface OpenAPIOperation {
+  summary?: string
+  description?: string
+  parameters?: OpenAPIParameter[]
+  requestBody?: OpenAPIRequestBody
+}
+
+export interface OpenAPIParameter {
+  name: string
+  in: 'query' | 'header' | 'path' | 'cookie'
+  description?: string
+  required?: boolean
+  schema?: {
+    type: string
+    default?: string
+  }
+}
+
+export interface OpenAPIRequestBody {
+  content?: Record<string, OpenAPIMediaType>
+}
+
+export interface OpenAPIMediaType {
+  schema?: {
+    type: string
+    example?: unknown
+  }
+  example?: unknown
+}
+
+export interface HARFormat {
+  log: {
+    entries: HAREntry[]
+  }
+}
+
+export interface HAREntry {
+  startedDateTime: string
+  request: HARRequest
+  response: HARResponse
+}
+
+export interface HARRequest {
+  method: string
+  url: string
+  queryString: HARParam[]
+  headers: HARParam[]
+  postData?: {
+    mimeType: string
+    text?: string
+    params?: HARParam[]
+  }
+}
+
+export interface HARResponse {
+  status: number
+  statusText: string
+}
+
+export interface HARParam {
+  name: string
+  value: string
+}
