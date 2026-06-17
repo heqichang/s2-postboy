@@ -485,4 +485,254 @@ body {
   gap: 8px;
   background-color: #1e1e1e;
   border-bottom: 1px solid #3e3e42;
+  max-height: 45vh;
+  overflow: hidden;
+}
+
+.body-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.body-type-selector {
+  display: flex;
+  align-items: center;
+}
+
+.body-type-select {
+  padding: 6px 10px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.body-type-select:hover {
+  background-color: #4a4a4a;
+}
+
+.body-editor-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.raw-subtype-select {
+  padding: 6px 10px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  margin-bottom: 8px;
+}
+
+.body-raw-input {
+  min-height: 180px;
+}
+
+.file-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-name {
+  color: #9cdcfe;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-label {
+  color: #888;
+  font-size: 13px;
+}
+
+.browse-btn {
+  padding: 6px 12px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.browse-btn:hover {
+  background-color: #4a4a4a;
+}
+
+.browse-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.binary-body-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  align-items: flex-start;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.graphql-body-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphql-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.graphql-input {
+  min-height: 100px;
+}
+
+.auth-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-type-selector {
+  display: flex;
+  align-items: center;
+}
+
+.auth-type-select {
+  padding: 6px 10px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.auth-editor-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.auth-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.auth-input {
+  padding: 8px 10px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.auth-input:focus {
+  border-color: #007acc;
+}
+
+.cookie-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.request-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+}
+
+.preview-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #3e3e42;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.preview-tab {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.preview-tab:hover {
+  color: #d4d4d4;
+}
+
+.preview-tab.active {
+  color: #007acc;
+  border-bottom-color: #007acc;
+}
+
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  background-color: #252526;
+  border-radius: 4px;
+  padding: 0;
+  position: relative;
+}
+
+.preview-code {
+  padding: 16px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+  color: #d4d4d4;
+  margin: 0;
+}
+
+.preview-tabs .copy-btn {
+  margin-left: auto;
+  position: static;
 }
