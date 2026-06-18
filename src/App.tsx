@@ -9,6 +9,8 @@ import type {
   HttpRequest,
   SavedRequest,
   ScriptResult,
+  Assertion,
+  AssertionResult,
 } from './types'
 import { generateId, createEmptyPair, buildUrlWithParams, mergeCookies } from './utils'
 import { sendRequest, cancelRequest, isElectron, getAllCookies, setCookieStorage } from './requestService'
@@ -17,6 +19,7 @@ import * as environmentStore from './store/environmentStore'
 import * as collectionStore from './store/collectionStore'
 import { replaceVariablesInObject, buildVariableStore } from './variableReplacer'
 import { runPreRequestScript, runPostRequestScript } from './scriptRunner'
+import { runAssertions } from './assertionEngine'
 import RequestBar from './components/RequestBar'
 import RequestTabs from './components/RequestTabs'
 import ResponsePanel from './components/ResponsePanel'
@@ -24,6 +27,7 @@ import Sidebar from './components/Sidebar'
 import EnvironmentSelector from './components/EnvironmentSelector'
 import SaveRequestDialog from './components/SaveRequestDialog'
 import ImportDialog from './components/ImportDialog'
+import TestRunner from './components/TestRunner'
 import { ModalProvider, useModal } from './components/ModalContext'
 
 const STORAGE_KEY = 'postboy_cookies'
@@ -58,16 +62,20 @@ function AppContent() {
   const [cookies, setCookies] = useState<CookieItem[]>([])
   const [preRequestScript, setPreRequestScript] = useState('')
   const [postRequestScript, setPostRequestScript] = useState('')
+  const [assertions, setAssertions] = useState<Assertion[]>([])
   const [response, setResponse] = useState<HttpResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
+  const [showTestRunner, setShowTestRunner] = useState(false)
+  const [testRunnerConfig, setTestRunnerConfig] = useState<{ collectionId: string; folderId?: string | null } | null>(null)
   const [scriptResults, setScriptResults] = useState<{
     preRequest?: ScriptResult
     postRequest?: ScriptResult
   }>({})
+  const [assertionResults, setAssertionResults] = useState<AssertionResult[]>([])
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(collectionStore.getActiveCollectionId())
   const [, forceUpdate] = useState({})
 
@@ -106,8 +114,9 @@ function AppContent() {
       timeout: timeout * 1000,
       preRequestScript,
       postRequestScript,
+      assertions,
     }),
-    [method, fullUrl, headers, queryParams, bodyConfig, auth, cookies, timeout, preRequestScript, postRequestScript]
+    [method, fullUrl, headers, queryParams, bodyConfig, auth, cookies, timeout, preRequestScript, postRequestScript, assertions]
   )
 
   const requestPreview: HttpRequest = useMemo(
@@ -129,9 +138,11 @@ function AppContent() {
     setCookies(request.cookies || [])
     setPreRequestScript(request.preRequestScript || '')
     setPostRequestScript(request.postRequestScript || '')
+    setAssertions(request.assertions || [])
     setResponse(null)
     setError(null)
     setScriptResults({})
+    setAssertionResults([])
   }, [])
 
   const handleSend = async () => {
@@ -141,6 +152,7 @@ function AppContent() {
     setError(null)
     setResponse(null)
     setScriptResults({})
+    setAssertionResults([])
 
     const requestId = generateId()
     setCurrentRequestId(requestId)
@@ -178,6 +190,11 @@ function AppContent() {
       }
 
       setResponse(result)
+
+      if (assertions.length > 0) {
+        const assertionResults = runAssertions(assertions, result)
+        setAssertionResults(assertionResults)
+      }
 
       if (postRequestScript) {
         const { result: postResult } = runPostRequestScript(
@@ -279,6 +296,11 @@ function AppContent() {
     showAlert({ message: '导入成功' })
   }
 
+  const handleRunCollection = (collectionId: string, folderId?: string | null) => {
+    setTestRunnerConfig({ collectionId, folderId })
+    setShowTestRunner(true)
+  }
+
   return (
     <div className="app">
       <div className="header">
@@ -290,6 +312,7 @@ function AppContent() {
           onSelectRequest={loadRequest}
           onShowSaveDialog={handleShowSaveDialog}
           onShowImportDialog={handleShowImportDialog}
+          onRunCollection={handleRunCollection}
         />
         <div className="request-content">
           <RequestBar
@@ -311,7 +334,9 @@ function AppContent() {
             cookies={cookies}
             preRequestScript={preRequestScript}
             postRequestScript={postRequestScript}
+            assertions={assertions}
             requestPreview={requestPreview}
+            assertionResults={assertionResults}
             onQueryParamsChange={setQueryParams}
             onHeadersChange={setHeaders}
             onBodyChange={setBodyConfig}
@@ -319,6 +344,7 @@ function AppContent() {
             onCookiesChange={setCookies}
             onPreRequestScriptChange={setPreRequestScript}
             onPostRequestScriptChange={setPostRequestScript}
+            onAssertionsChange={setAssertions}
             disabled={loading}
           />
           <ResponsePanel
@@ -326,6 +352,7 @@ function AppContent() {
             loading={loading}
             error={error}
             scriptResults={scriptResults}
+            assertionResults={assertionResults}
           />
         </div>
       </div>
@@ -340,6 +367,13 @@ function AppContent() {
         <ImportDialog
           onClose={() => setShowImportDialog(false)}
           onImported={handleImported}
+        />
+      )}
+      {showTestRunner && testRunnerConfig && (
+        <TestRunner
+          collectionId={testRunnerConfig.collectionId}
+          folderId={testRunnerConfig.folderId}
+          onClose={() => setShowTestRunner(false)}
         />
       )}
     </div>

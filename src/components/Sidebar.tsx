@@ -8,6 +8,7 @@ interface SidebarProps {
   onSelectRequest: (request: HttpRequest) => void
   onShowSaveDialog: () => void
   onShowImportDialog: () => void
+  onRunCollection?: (collectionId: string, folderId?: string | null) => void
 }
 
 type SidebarTab = 'collections' | 'history' | 'environments'
@@ -16,6 +17,7 @@ export default function Sidebar({
   onSelectRequest,
   onShowSaveDialog,
   onShowImportDialog,
+  onRunCollection,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('collections')
 
@@ -51,6 +53,7 @@ export default function Sidebar({
             onSelectRequest={handleSelectSavedRequest}
             onShowSaveDialog={onShowSaveDialog}
             onShowImportDialog={onShowImportDialog}
+            onRunCollection={onRunCollection}
           />
         )}
         {activeTab === 'environments' && (

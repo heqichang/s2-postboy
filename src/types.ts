@@ -94,6 +94,7 @@ export interface HttpRequest {
   timeout: number
   preRequestScript?: string
   postRequestScript?: string
+  assertions?: Assertion[]
 }
 
 export interface HttpResponse {
@@ -154,7 +155,7 @@ export interface TreeNode {
 }
 
 export type ImportFormat = 'postman' | 'openapi' | 'curl' | 'har' | 'json'
-export type ExportFormat = 'postman' | 'json'
+export type ExportFormat = 'postman' | 'json' | 'html'
 
 export interface CollectionStore {
   collections: Collection[]
@@ -416,4 +417,106 @@ export interface TestResult {
   name: string
   passed: boolean
   error?: string
+}
+
+export type AssertionType =
+  | 'statusCode'
+  | 'responseTime'
+  | 'responseBody'
+  | 'jsonValue'
+  | 'header'
+  | 'contentType'
+  | 'jsonSchema'
+
+export type AssertionOperator =
+  | 'equal'
+  | 'notEqual'
+  | 'contains'
+  | 'notContains'
+  | 'lessThan'
+  | 'greaterThan'
+  | 'exists'
+  | 'notExists'
+
+export interface Assertion {
+  id: string
+  type: AssertionType
+  property?: string
+  operator: AssertionOperator
+  expectedValue?: string | number
+  enabled: boolean
+}
+
+export interface AssertionResult {
+  assertion: Assertion
+  passed: boolean
+  actualValue?: unknown
+  error?: string
+}
+
+export interface RunConfig {
+  collectionId: string
+  folderId?: string | null
+  environmentId?: string | null
+  iterations: number
+  delay: number
+  dataFile?: DataFile | null
+  stopOnError?: boolean
+}
+
+export interface DataFile {
+  type: 'csv' | 'json'
+  data: Record<string, string>[]
+  fileName: string
+}
+
+export interface RequestRunResult {
+  requestId: string
+  requestName: string
+  request: HttpRequest
+  response?: HttpResponse
+  error?: string
+  testResults: TestResult[]
+  assertionResults: AssertionResult[]
+  allPassed: boolean
+  iteration: number
+  dataRow?: Record<string, string>
+}
+
+export interface CollectionRunResult {
+  id: string
+  name: string
+  startTime: number
+  endTime?: number
+  totalRequests: number
+  passedRequests: number
+  failedRequests: number
+  totalTests: number
+  passedTests: number
+  failedTests: number
+  totalAssertions: number
+  passedAssertions: number
+  failedAssertions: number
+  averageResponseTime: number
+  results: RequestRunResult[]
+  config: RunConfig
+}
+
+export interface TestReportData {
+  summary: {
+    totalRequests: number
+    passedRequests: number
+    failedRequests: number
+    totalTests: number
+    passedTests: number
+    failedTests: number
+    totalAssertions: number
+    passedAssertions: number
+    failedAssertions: number
+    averageResponseTime: number
+    totalTime: number
+  }
+  results: RequestRunResult[]
+  config: RunConfig
+  exportedAt: number
 }

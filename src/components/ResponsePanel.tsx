@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import type { HttpResponse, ScriptResult } from '../types'
+import type { HttpResponse, ScriptResult, AssertionResult } from '../types'
 import { formatBytes, formatTime, formatJson, getStatusClass, formatResponseHeaders } from '../utils'
+import { getAssertionTypeLabel, getOperatorLabel } from '../assertionEngine'
 
 interface ResponsePanelProps {
   response: HttpResponse | null
@@ -10,6 +11,7 @@ interface ResponsePanelProps {
     preRequest?: ScriptResult
     postRequest?: ScriptResult
   }
+  assertionResults?: AssertionResult[]
 }
 
 type TabType = 'body' | 'headers' | 'test-results'
@@ -53,7 +55,7 @@ function highlightJson(json: string): React.ReactNode[] {
   return nodes
 }
 
-export default function ResponsePanel({ response, loading, error, scriptResults }: ResponsePanelProps) {
+export default function ResponsePanel({ response, loading, error, scriptResults, assertionResults }: ResponsePanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('body')
   const [copied, setCopied] = useState(false)
 
@@ -189,9 +191,42 @@ export default function ResponsePanel({ response, loading, error, scriptResults 
               )}
             </div>
           )}
+
+          {assertionResults && assertionResults.length > 0 && (
+            <div className="script-result-section">
+              <h4>
+                可视化断言
+                <span className="test-count">
+                  {assertionResults.filter((a) => a.passed).length}/{assertionResults.length}
+                </span>
+              </h4>
+              <div className="test-list">
+                {assertionResults.map((result, i) => (
+                  <div key={i} className={`test-item ${result.passed ? 'test-passed' : 'test-failed'}`}>
+                    <span className="test-icon">{result.passed ? '✓' : '✗'}</span>
+                    <span className="test-name">
+                      {getAssertionTypeLabel(result.assertion.type)}
+                      {result.assertion.property && `: ${result.assertion.property}`}
+                      {' '}{getOperatorLabel(result.assertion.operator)}
+                      {' '}{result.assertion.expectedValue ?? ''}
+                    </span>
+                    {!result.passed && result.error && (
+                      <span className="test-error">{result.error}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {scriptResults?.postRequest && (
             <div className="script-result-section">
-              <h4>Tests</h4>
+              <h4>
+                脚本测试
+                <span className="test-count">
+                  {scriptResults.postRequest.tests.filter((t) => t.passed).length}/{scriptResults.postRequest.tests.length}
+                </span>
+              </h4>
               {!scriptResults.postRequest.success && (
                 <div className="script-error">✗ 执行失败: {scriptResults.postRequest.error}</div>
               )}
@@ -229,10 +264,10 @@ export default function ResponsePanel({ response, loading, error, scriptResults 
               )}
             </div>
           )}
-          {!scriptResults?.preRequest && !scriptResults?.postRequest && (
+          {!scriptResults?.preRequest && !scriptResults?.postRequest && (!assertionResults || assertionResults.length === 0) && (
             <div className="empty-state">
               <div className="empty-state-icon">📝</div>
-              <div className="empty-state-text">没有脚本执行结果</div>
+              <div className="empty-state-text">没有测试结果</div>
             </div>
           )}
         </div>

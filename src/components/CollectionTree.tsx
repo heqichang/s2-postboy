@@ -8,6 +8,7 @@ interface CollectionTreeProps {
   onSelectRequest: (request: SavedRequest) => void
   onShowSaveDialog: () => void
   onShowImportDialog: () => void
+  onRunCollection?: (collectionId: string, folderId?: string | null) => void
 }
 
 interface TreeNodeComponentProps {
@@ -140,6 +141,7 @@ export default function CollectionTree({
   onSelectRequest,
   onShowSaveDialog,
   onShowImportDialog,
+  onRunCollection,
 }: CollectionTreeProps) {
   const { showAlert, showConfirm, showPrompt } = useModal()
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([])
@@ -403,6 +405,12 @@ export default function CollectionTree({
         >
           {contextMenu.node.type === 'collection' && (
             <>
+              <div className="context-menu-item" onClick={() => {
+                onRunCollection?.(contextMenu.node.id)
+                setContextMenu(null)
+              }}>
+                ▶️ 运行集合
+              </div>
               <div className="context-menu-item" onClick={handleCreateFolder}>
                 📂 新建文件夹
               </div>
@@ -422,6 +430,15 @@ export default function CollectionTree({
           )}
           {contextMenu.node.type === 'folder' && (
             <>
+              <div className="context-menu-item" onClick={() => {
+                const location = collectionStore.findRequestLocation(contextMenu.node.id)
+                if (location) {
+                  onRunCollection?.(location.collectionId, contextMenu.node.id)
+                }
+                setContextMenu(null)
+              }}>
+                ▶️ 运行文件夹
+              </div>
               <div className="context-menu-item" onClick={handleCreateFolder}>
                 📂 新建子文件夹
               </div>

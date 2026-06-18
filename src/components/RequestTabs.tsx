@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import type { KeyValuePair, RequestBody, AuthConfig, CookieItem, HttpRequest } from '../types'
+import type { KeyValuePair, RequestBody, AuthConfig, CookieItem, HttpRequest, Assertion, AssertionResult } from '../types'
 import KeyValueEditor from './KeyValueEditor'
 import BodyEditor from './BodyEditor'
 import AuthEditor from './AuthEditor'
 import CookieEditor from './CookieEditor'
 import RequestPreview from './RequestPreview'
+import AssertionEditor from './AssertionEditor'
 
 interface RequestTabsProps {
   queryParams: KeyValuePair[]
@@ -14,7 +15,9 @@ interface RequestTabsProps {
   cookies: CookieItem[]
   preRequestScript: string
   postRequestScript: string
+  assertions: Assertion[]
   requestPreview: HttpRequest
+  assertionResults?: AssertionResult[]
   onQueryParamsChange: (params: KeyValuePair[]) => void
   onHeadersChange: (headers: KeyValuePair[]) => void
   onBodyChange: (bodyConfig: RequestBody) => void
@@ -22,10 +25,11 @@ interface RequestTabsProps {
   onCookiesChange: (cookies: CookieItem[]) => void
   onPreRequestScriptChange: (script: string) => void
   onPostRequestScriptChange: (script: string) => void
+  onAssertionsChange: (assertions: Assertion[]) => void
   disabled?: boolean
 }
 
-type TabType = 'params' | 'headers' | 'body' | 'auth' | 'cookies' | 'pre-request' | 'post-request' | 'preview'
+type TabType = 'params' | 'headers' | 'body' | 'auth' | 'cookies' | 'pre-request' | 'tests' | 'preview'
 
 export default function RequestTabs({
   queryParams,
@@ -35,7 +39,9 @@ export default function RequestTabs({
   cookies,
   preRequestScript,
   postRequestScript,
+  assertions,
   requestPreview,
+  assertionResults,
   onQueryParamsChange,
   onHeadersChange,
   onBodyChange,
@@ -43,9 +49,11 @@ export default function RequestTabs({
   onCookiesChange,
   onPreRequestScriptChange,
   onPostRequestScriptChange,
+  onAssertionsChange,
   disabled,
 }: RequestTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('params')
+  const [testsSubTab, setTestsSubTab] = useState<'script' | 'assertions'>('assertions')
 
   return (
     <div className="request-section">
@@ -87,10 +95,15 @@ export default function RequestTabs({
           Pre-request
         </button>
         <button
-          className={`tab ${activeTab === 'post-request' ? 'active' : ''}`}
-          onClick={() => setActiveTab('post-request')}
+          className={`tab ${activeTab === 'tests' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tests')}
         >
           Tests
+          {assertions.length > 0 && (
+            <span className="tab-badge">
+              {assertions.filter((a) => a.enabled).length}
+            </span>
+          )}
         </button>
         <button
           className={`tab ${activeTab === 'preview' ? 'active' : ''}`}
@@ -129,20 +142,56 @@ export default function RequestTabs({
             />
           </div>
         )}
-        {activeTab === 'post-request' && (
-          <div className="script-editor">
-            <textarea
-              value={postRequestScript}
-              onChange={(e) => onPostRequestScriptChange(e.target.value)}
-              placeholder="// 后置脚本示例:
-// var jsonData = pm.response.json();
-// pm.environment.set('userId', jsonData.id);
-// pm.test('Status code is 200', function() {
-//   pm.expect(pm.response.status).to.equal(200);
+        {activeTab === 'tests' && (
+          <div className="tests-tab">
+            <div className="tests-sub-tabs">
+              <button
+                className={`tests-sub-tab ${testsSubTab === 'assertions' ? 'active' : ''}`}
+                onClick={() => setTestsSubTab('assertions')}
+              >
+                可视化断言
+              </button>
+              <button
+                className={`tests-sub-tab ${testsSubTab === 'script' ? 'active' : ''}`}
+                onClick={() => setTestsSubTab('script')}
+              >
+                测试脚本
+              </button>
+            </div>
+            <div className="tests-tab-content">
+              {testsSubTab === 'assertions' && (
+                <AssertionEditor
+                  assertions={assertions}
+                  onChange={onAssertionsChange}
+                  disabled={disabled}
+                  results={assertionResults}
+                />
+              )}
+              {testsSubTab === 'script' && (
+                <div className="script-editor">
+                  <textarea
+                    value={postRequestScript}
+                    onChange={(e) => onPostRequestScriptChange(e.target.value)}
+                    placeholder="// 测试脚本示例:
+// pm.test('Status code is 200', function () {
+//   pm.response.to.have.status(200);
+// });
+//
+// pm.test('Response has user id', function () {
+//   var jsonData = pm.response.json();
+//   pm.expect(jsonData).to.have.property('id');
+//   pm.expect(jsonData.id).to.be.a('number');
+// });
+//
+// pm.test('Response time is less than 500ms', function () {
+//   pm.expect(pm.response.responseTime).to.be.below(500);
 // });"
-              disabled={disabled}
-              className="script-textarea"
-            />
+                    disabled={disabled}
+                    className="script-textarea"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
         {activeTab === 'preview' && (
