@@ -125,7 +125,7 @@ export function createScriptContext(
   request?: HttpRequest,
   response?: HttpResponse,
   eventName: 'prerequest' | 'test' = 'prerequest'
-): { context: ScriptContext; getChanges: () => Partial<VariableStore> } {
+): { context: ScriptContext; getChanges: () => Partial<VariableStore>; tests: TestResult[] } {
   const store: VariableStore = JSON.parse(JSON.stringify(initialStore))
   const envChanges: Record<string, string> = {}
   const globalChanges: Record<string, string> = {}
@@ -185,7 +185,7 @@ export function createScriptContext(
     }
   }
 
-  return { context, getChanges }
+  return { context, getChanges, tests }
 }
 
 export function runScript(
@@ -195,17 +195,15 @@ export function runScript(
   response?: HttpResponse,
   eventName: 'prerequest' | 'test' = 'prerequest'
 ): ScriptResult {
-  const tests: TestResult[] = []
-
   if (!script.trim()) {
     return {
       success: true,
-      tests,
+      tests: [],
       variables: {},
     }
   }
 
-  const { context, getChanges } = createScriptContext(initialStore, request, response, eventName)
+  const { context, getChanges, tests } = createScriptContext(initialStore, request, response, eventName)
 
   try {
     const wrappedScript = `
