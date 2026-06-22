@@ -7,8 +7,11 @@ import type {
   KeyValuePair,
   CookieItem,
   RawSubType,
+  MockRule,
+  MockServerConfig,
 } from '../src/types'
 import { URL } from 'url'
+import * as mockServer from './mockServer'
 
 const pendingRequests = new Map<string, http.ClientRequest>()
 const cookieJar: CookieItem[] = []
@@ -435,5 +438,40 @@ ipcMain.handle('http:getCookies', async () => {
 
 ipcMain.handle('http:clearCookies', async () => {
   cookieJar.length = 0
+  return { success: true }
+})
+
+ipcMain.handle('mock:start', async (_event, port: number, host: string, rules: MockRule[], config: MockServerConfig) => {
+  return mockServer.startServer(port, host, rules, config)
+})
+
+ipcMain.handle('mock:stop', async () => {
+  return mockServer.stopServer()
+})
+
+ipcMain.handle('mock:restart', async (_event, port: number, host: string, rules: MockRule[], config: MockServerConfig) => {
+  return mockServer.restartServer(port, host, rules, config)
+})
+
+ipcMain.handle('mock:status', async () => {
+  return mockServer.getStatus()
+})
+
+ipcMain.handle('mock:logs', async () => {
+  return mockServer.getLogs()
+})
+
+ipcMain.handle('mock:clearLogs', async () => {
+  mockServer.clearLogs()
+  return { success: true }
+})
+
+ipcMain.handle('mock:updateRules', async (_event, rules: MockRule[]) => {
+  mockServer.setRules(rules)
+  return { success: true }
+})
+
+ipcMain.handle('mock:updateConfig', async (_event, config: MockServerConfig) => {
+  mockServer.setConfig(config)
   return { success: true }
 })

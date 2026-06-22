@@ -520,3 +520,78 @@ export interface TestReportData {
   config: RunConfig
   exportedAt: number
 }
+
+export type MockMatchType = 'exact' | 'pathParam' | 'query' | 'header' | 'body'
+
+export interface MockMatchCondition {
+  id: string
+  type: MockMatchType
+  key?: string
+  value?: string
+  operator?: 'equal' | 'contains' | 'regex' | 'exists'
+  enabled: boolean
+}
+
+export interface MockResponse {
+  id: string
+  name: string
+  statusCode: number
+  headers: KeyValuePair[]
+  body: string
+  bodyType: 'json' | 'text' | 'xml' | 'html' | 'binary'
+  delay: number
+  isDefault: boolean
+  matchConditions: MockMatchCondition[]
+}
+
+export interface MockRule {
+  id: string
+  name: string
+  description: string
+  enabled: boolean
+  method: HttpMethod
+  path: string
+  priority: number
+  responses: MockResponse[]
+  createdAt: number
+  updatedAt: number
+}
+
+export interface MockServerConfig {
+  enabled: boolean
+  port: number
+  host: string
+  globalDelay: number
+  corsEnabled: boolean
+}
+
+export interface MockLogEntry {
+  id: string
+  timestamp: number
+  method: string
+  url: string
+  matchedRuleId?: string
+  matchedResponseId?: string
+  statusCode: number
+  requestHeaders: Record<string, string>
+  requestBody?: string
+  responseHeaders: Record<string, string>
+  responseBody?: string
+  responseTime: number
+  error?: string
+}
+
+export interface MockServerStatus {
+  running: boolean
+  port: number
+  host: string
+  url: string
+  startTime?: number
+  requestCount: number
+}
+
+export interface MockStore {
+  rules: MockRule[]
+  config: MockServerConfig
+  logs: MockLogEntry[]
+}

@@ -17,6 +17,7 @@ import { sendRequest, cancelRequest, isElectron, getAllCookies, setCookieStorage
 import * as historyStore from './store/historyStore'
 import * as environmentStore from './store/environmentStore'
 import * as collectionStore from './store/collectionStore'
+import * as mockStore from './store/mockStore'
 import { replaceVariablesInObject, buildVariableStore } from './variableReplacer'
 import { runPreRequestScript, runPostRequestScript } from './scriptRunner'
 import { runAssertions } from './assertionEngine'
@@ -301,6 +302,12 @@ function AppContent() {
     setShowTestRunner(true)
   }
 
+  const handleSaveAsMock = useCallback(() => {
+    if (!response) return
+    mockStore.createRuleFromRequest(currentRequest, response)
+    showAlert({ message: '已保存为 Mock 规则，请在 Mock 面板中查看' })
+  }, [currentRequest, response, showAlert])
+
   return (
     <div className="app">
       <div className="header">
@@ -353,6 +360,7 @@ function AppContent() {
             error={error}
             scriptResults={scriptResults}
             assertionResults={assertionResults}
+            onSaveAsMock={handleSaveAsMock}
           />
         </div>
       </div>

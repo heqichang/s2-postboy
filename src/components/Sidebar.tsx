@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CollectionTree from './CollectionTree'
 import HistoryPanel from './HistoryPanel'
 import EnvironmentManager from './EnvironmentManager'
+import MockPanel from './MockPanel'
 import type { SavedRequest, HttpRequest } from '../types'
 
 interface SidebarProps {
@@ -11,7 +12,7 @@ interface SidebarProps {
   onRunCollection?: (collectionId: string, folderId?: string | null) => void
 }
 
-type SidebarTab = 'collections' | 'history' | 'environments'
+type SidebarTab = 'collections' | 'environments' | 'mock' | 'history'
 
 export default function Sidebar({
   onSelectRequest,
@@ -41,6 +42,12 @@ export default function Sidebar({
           🌍 环境
         </button>
         <button
+          className={`sidebar-tab ${activeTab === 'mock' ? 'active' : ''}`}
+          onClick={() => setActiveTab('mock')}
+        >
+          🎭 Mock
+        </button>
+        <button
           className={`sidebar-tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -58,6 +65,9 @@ export default function Sidebar({
         )}
         {activeTab === 'environments' && (
           <EnvironmentManager />
+        )}
+        {activeTab === 'mock' && (
+          <MockPanel />
         )}
         {activeTab === 'history' && (
           <HistoryPanel onSelectRequest={onSelectRequest} />

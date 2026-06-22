@@ -12,6 +12,7 @@ interface ResponsePanelProps {
     postRequest?: ScriptResult
   }
   assertionResults?: AssertionResult[]
+  onSaveAsMock?: () => void
 }
 
 type TabType = 'body' | 'headers' | 'test-results'
@@ -55,7 +56,7 @@ function highlightJson(json: string): React.ReactNode[] {
   return nodes
 }
 
-export default function ResponsePanel({ response, loading, error, scriptResults, assertionResults }: ResponsePanelProps) {
+export default function ResponsePanel({ response, loading, error, scriptResults, assertionResults, onSaveAsMock }: ResponsePanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('body')
   const [copied, setCopied] = useState(false)
 
@@ -123,6 +124,13 @@ export default function ResponsePanel({ response, loading, error, scriptResults,
         <div className="status-item">
           <span className="status-label">响应大小</span>
           <span className="status-value">{formatBytes(response.size)}</span>
+        </div>
+        <div className="status-item status-actions">
+          {onSaveAsMock && (
+            <button className="btn btn-small" onClick={onSaveAsMock}>
+              🎭 保存为 Mock
+            </button>
+          )}
         </div>
       </div>
 
