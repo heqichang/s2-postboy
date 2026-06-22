@@ -69,8 +69,10 @@ export default function MockPanel() {
     setLocalGlobalDelay(config.globalDelay)
     setLocalCorsEnabled(config.corsEnabled)
     refreshStatus()
+    refreshLogs()
     const interval = setInterval(() => {
       refreshStatus()
+      refreshLogs()
     }, 2000)
     return () => {
       unsubscribe()
@@ -83,6 +85,17 @@ export default function MockPanel() {
     try {
       const status = await window.electronAPI.mockStatus()
       setServerStatus(status)
+    } catch {}
+  }
+
+  const refreshLogs = async () => {
+    if (!isElectron()) return
+    try {
+      const serverLogs = await window.electronAPI.mockLogs()
+      const localLogs = mockStore.getLogs()
+      if (serverLogs.length !== localLogs.length || serverLogs[0]?.id !== localLogs[0]?.id) {
+        mockStore.replaceLogs(serverLogs)
+      }
     } catch {}
   }
 
@@ -208,9 +221,14 @@ export default function MockPanel() {
     mockStore.duplicateRule(rule.id)
   }
 
-  const handleClearLogs = () => {
+  const handleClearLogs = async () => {
     mockStore.clearLogs()
     setSelectedLog(null)
+    if (isElectron()) {
+      try {
+        await window.electronAPI.mockClearLogs()
+      } catch {}
+    }
   }
 
   const handleSaved = async () => {

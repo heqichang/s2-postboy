@@ -241,6 +241,12 @@ export function clearLogs(): void {
   notifyListeners()
 }
 
+export function replaceLogs(newLogs: MockLogEntry[]): void {
+  logs = newLogs.slice(0, 500)
+  save()
+  notifyListeners()
+}
+
 export function createRuleFromRequest(
   request: HttpRequest,
   response?: HttpResponse
